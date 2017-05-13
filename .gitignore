@@ -1,0 +1,7 @@
+*.log*
+*.*~
+*.tgz
+.tmp/
+lib/
+dist/
+node_modules/
