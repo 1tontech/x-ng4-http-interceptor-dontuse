@@ -2,4 +2,4 @@
 
 TODO
 
-Use `npm run commit` instead of `git commit` & follow prompts to generate git message
+Use `yarn run commit` instead of `git commit` & follow prompts to generate git message
