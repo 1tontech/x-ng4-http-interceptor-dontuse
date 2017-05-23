@@ -76,14 +76,15 @@ export class InterceptorService extends Http {
       .options(interceptorOptions)
       .sharedData(interceptorOptions.sharedData || {})
       .build();
-    return Observable.create(function (observer: Subscriber<Response>) {
+
+    return Observable.create((observer: Subscriber<Response>) => {
       const subscription = this.httpRequest(request).subscribe(
         (response: Response) => observer.next(response),
         (e: Error) => observer.error(e),
         () => observer.complete()
       );
       observer.add(() => {
-        this.interceptors.reverse().forEach((interceptor: Interceptor, index: number) => {
+        this.interceptors.reverse().forEach((interceptor, index) => {
           interceptor.onUnsubscribe(index, url, options);
         });
       });
