@@ -85,7 +85,9 @@ export class InterceptorService extends Http {
       );
       observer.add(() => {
         this.interceptors.reverse().forEach((interceptor, index) => {
-          interceptor.onUnsubscribe(index, url, options);
+          if (interceptor.onUnsubscribe !== undefined) {
+            interceptor.onUnsubscribe(index, url, options);
+          }
         });
       });
       return this;
