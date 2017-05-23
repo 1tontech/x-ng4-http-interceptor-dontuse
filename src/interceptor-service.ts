@@ -35,7 +35,7 @@ import { RealResponseObservableTransformer } from './real-response-observable-tr
  * Wrapper around native angular `Http` service.
  * Allows you to add `Interceptor`s that lets you do
  * 1. Transform request before it reaches the actual request, such as, add headers transparently
- * 2. Transform response, such as stripout the top level object & return the payload (or) raise errors if `response.status` is not `ok`
+ * 2. Transform response, such as strip out the top level object & return the payload (or) raise errors if `response.status` is not `ok`
  * 3. To short circuit the request flow based on runtime data
  * 4. To selective caching/log request/responses
  * 5. Augment the real `Observable<Response>` that native angular `http.request(..)` returns
@@ -43,7 +43,7 @@ import { RealResponseObservableTransformer } from './real-response-observable-tr
  * 7. Generate handcrafted response incase of error/base of your runtime decision
  *
  * The service executes methods in the interceptor chain in the following manner
- * 1. For each of the listed interceptor, tranforms the request by invoking\
+ * 1. For each of the listed interceptor, transforms the request by invoking\
  *  `beforeRequest(..)` on each interceptor in the same order they are added
  * 2. Invokes native angular `http.request(..)` with the result of last interceptor's `beforeRequest(..)` response
  * 3. Invokes `onResponse(..)` on each interceptor in the reverse order they are added
@@ -61,6 +61,7 @@ export class InterceptorService extends Http {
 
   /** Parent overrides **/
   request(url: string | Request, options?: RequestOptionsArgs | InterceptorRequestOptionsArgs): Observable<Response> {
+    console.log('Marking request for', url, 'I am', this);
     let interceptorOptions: InterceptorRequestOptionsArgs;
     if (!options) {
       interceptorOptions = {};
@@ -85,11 +86,12 @@ export class InterceptorService extends Http {
       );
       observer.add(() => {
         subscription.unsubscribe();
-        this.interceptors.reverse().forEach((interceptor, index) => {
+        for (let index = this.interceptors.length - 1; index >= 0; index--) {
+          const interceptor = this.interceptors[index];
           if (interceptor.onUnsubscribe !== undefined) {
             interceptor.onUnsubscribe(index, url, options);
           }
-        });
+        }
       });
       return this;
     });
@@ -186,6 +188,7 @@ export class InterceptorService extends Http {
   private httpRequest(request: InterceptorRequest): Observable<Response> {
     return this.runBeforeInterceptors(request)
       .flatMap<InterceptorRequest, InterceptorResponseWrapper>((transformedRequest: InterceptorRequest, _: number) => {
+        console.log(`Received request`, transformedRequest);
         const transformedRequestInternal = <InterceptorRequestInternal>transformedRequest;
         const interceptorRequestInternalBuilder = InterceptorRequestBuilderInternal.new(transformedRequestInternal);
 
@@ -193,16 +196,20 @@ export class InterceptorService extends Http {
           const responseWrapper = InterceptorResponseWrapperBuilderInternal
             .newInternal(this.interceptors.length, transformedRequestInternal)
             .build();
+          console.log('Response wrapper', responseWrapper);
           return Observable.of(responseWrapper);
         } else if (interceptorRequestInternalBuilder.getShortCircuitAtCurrentStep()) {
+          // if the last interceptor in the chain asked to skip the flow, we can handle it here
           const responseWrapper = InterceptorResponseWrapperBuilderInternal
             .newInternal(this.interceptors.length, transformedRequestInternal)
             .build();
+          console.log('Response wrapper', responseWrapper);
           return Observable.of(responseWrapper);
         }
 
         let response$ = super.request(transformedRequest.url, transformedRequest.options);
         if (this._realResponseObservableTransformer) {
+          console.log('Applying transformation to real request using', this._realResponseObservableTransformer);
           response$ = this._realResponseObservableTransformer.transform(response$, transformedRequest, new this.HttpDirect(), this);
         }
 
@@ -259,6 +266,7 @@ export class InterceptorService extends Http {
 
           if (interceptor.beforeRequest !== undefined) {
             try {
+              console.log('Invoking beforeRequest on', interceptor);
               const processedRequest = interceptor.beforeRequest(request, index);
               let processedRequest$: Observable<InterceptorRequest>;
 
@@ -316,6 +324,7 @@ export class InterceptorService extends Http {
           try {
             if (transformedResponseWrapper.forceRequestCompletion) {
               if (interceptor.onForceCompleteOrForceReturn !== undefined) {
+                console.log('Invoking onForceCompleteOrForceReturn on', interceptor);
                 interceptor.onForceCompleteOrForceReturn(transformedResponseWrapper, index);
               }
               if (index === 0) { // complete the observable, since this is the first interceptor (last in the response chain)
@@ -325,6 +334,7 @@ export class InterceptorService extends Http {
               }
             } else if (transformedResponseWrapper.forceReturnResponse) {
               if (interceptor.onForceCompleteOrForceReturn !== undefined) {
+                console.log('Invoking onForceCompleteOrForceReturn on', interceptor);
                 interceptor.onForceCompleteOrForceReturn(transformedResponseWrapper, index);
               }
               return Observable.of(transformedResponseWrapper);
@@ -334,13 +344,16 @@ export class InterceptorService extends Http {
 
             if (transformedResponseWrapper.err) {
               if (interceptor.onErr !== undefined) {
+                console.log('Invoking onErr on', interceptor);
                 processedResponse = interceptor.onErr(transformedResponseWrapper, index);
               }
             } else if (transformedResponseWrapper.isShortCircuited()) {
               if (interceptor.onShortCircuit !== undefined) {
+                console.log('Invoking onShortCircuit on', interceptor);
                 processedResponse = interceptor.onShortCircuit(transformedResponseWrapper, index);
               }
             } else if (interceptor.onResponse !== undefined) {
+              console.log('Invoking onResponse on', interceptor);
               processedResponse = interceptor.onResponse(transformedResponseWrapper, index);
             }
 

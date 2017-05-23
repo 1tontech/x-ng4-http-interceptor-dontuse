@@ -21,12 +21,17 @@ export class InterceptorResponseWrapperBuilderInternal extends InterceptorRespon
     } else if (from instanceof InterceptorResponseWrapper) {
       InterceptorUtils.assign(builder, <InterceptorResponseWrapper>from);
     } else {
+      console.log('Copying from request to response');
       const request: InterceptorRequestInternal = new InterceptorRequestInternal();
       InterceptorUtils.assign(request, from);
       InterceptorUtils.assign(builder, from);
-      if (request.getShortCircuitAtCurrentStep()) {
-        builder.shortCircuitTriggeredBy(interceptorStep - 1)
-          .forceRequestCompletion(request.getAlsoForceRequestCompletion());
+      if (request.getAlreadyShortCircuited() || request.getShortCircuitAtCurrentStep()) {
+        if (request.getAlreadyShortCircuited()) {
+          builder.shortCircuitTriggeredBy(request.getShortCircuitTriggeredBy())
+        } else {
+          builder.shortCircuitTriggeredBy(interceptorStep - 1);
+        }
+        builder.forceRequestCompletion(request.getAlsoForceRequestCompletion());
       }
     }
     return builder;

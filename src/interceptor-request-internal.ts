@@ -6,10 +6,6 @@ import { InterceptorUtils } from './interceptor-utils';
 
 export class InterceptorRequestInternal extends InterceptorRequest {
 
-  /**
-   * Hack
-   * TODO: Point to typescript bug
-   */
   constructor() {
     super(null);
   }
