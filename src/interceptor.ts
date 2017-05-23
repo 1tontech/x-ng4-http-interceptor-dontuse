@@ -1,6 +1,8 @@
+import { Request, RequestOptionsArgs } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 
 import { InterceptorRequest } from './interceptor-request';
+import { InterceptorRequestOptionsArgs } from './interceptor-request-options-args';
 import { InterceptorResponseWrapper } from './interceptor-response-wrapper';
 
 /**
@@ -68,10 +70,17 @@ export interface Interceptor {
 
   /**
    * Invoked when any one in the interceptor chain forces request completion/return response/error
-   * Use this method to perform opeations that should be performed irrespective of what the interceptors in the chain want
+   * Use this method to perform operations that should be performed irrespective of what the other interceptors in the chain does
    * such as stopping progress bar/logging
    */
   onForceCompleteOrForceReturn?(response: InterceptorResponseWrapper,
     interceptorStep: number): void;
+
+  /**
+   * Invoked when the user unsubscribes while the request is still being handled
+   * Use this method to perform cleanup operations that should be performed when the request is cancelled by user
+   * such as stopping progress bar
+   */
+  onUnsubscribe?(interceptorStep: number, url: string | Request, options?: RequestOptionsArgs | InterceptorRequestOptionsArgs): void;
 
 }

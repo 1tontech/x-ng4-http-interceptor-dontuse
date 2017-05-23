@@ -1,3 +1,4 @@
+import { Subscriber } from 'rxjs/Rx';
 import { InterceptorRequestInternal } from './interceptor-request-internal';
 import {
   ConnectionBackend,
@@ -50,7 +51,7 @@ import { RealResponseObservableTransformer } from './real-response-observable-tr
  */
 export class InterceptorService extends Http {
 
-  private interceptors: Array<Interceptor>;
+  private interceptors: Interceptor[];
   private _realResponseObservableTransformer: RealResponseObservableTransformer;
 
   constructor(backend: ConnectionBackend, defaultOptions: RequestOptions) {
@@ -75,7 +76,19 @@ export class InterceptorService extends Http {
       .options(interceptorOptions)
       .sharedData(interceptorOptions.sharedData || {})
       .build();
-    return this.httpRequest(request);
+    return Observable.create(function (observer: Subscriber<Response>) {
+      const subscription = this.httpRequest(request).subscribe(
+        (response: Response) => observer.next(response),
+        (e: Error) => observer.error(e),
+        () => observer.complete()
+      );
+      observer.add(() => {
+        this.interceptors.reverse().forEach((interceptor: Interceptor, index: number) => {
+          interceptor.onUnsubscribe(index, url, options);
+        });
+      });
+      return this;
+    });
   }
 
   /**
