@@ -81,8 +81,8 @@ export class InterceptorService extends Http {
       .build();
 
     return Observable.create((observer: Subscriber<Response>) => {
-      const requestNum = this.requestNum;
-      const subscription = this.httpRequest(request, requestNum).subscribe(
+      const localRequestNum = this.requestNum;
+      const subscription = this.httpRequest(request, localRequestNum).subscribe(
         (response: Response) => observer.next(response),
         (e: Error) => observer.error(e),
         () => observer.complete()
@@ -92,7 +92,7 @@ export class InterceptorService extends Http {
         for (let index = this.interceptors.length - 1; index >= 0; index--) {
           const interceptor = this.interceptors[index];
           if (interceptor.onUnsubscribe !== undefined) {
-            interceptor.onUnsubscribe(index, url, options, requestNum);
+            interceptor.onUnsubscribe(index, url, options, localRequestNum);
           }
         }
       });
