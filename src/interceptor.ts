@@ -29,7 +29,8 @@ export interface Interceptor {
    *
    * Gives the ability to transform the request
    */
-  beforeRequest?(request: InterceptorRequest, interceptorStep: number): Observable<InterceptorRequest> | InterceptorRequest | void;
+  beforeRequest?(request: InterceptorRequest,
+    interceptorStep: number, requestNum?: number): Observable<InterceptorRequest> | InterceptorRequest | void;
 
   /**
    * Invoked once for each of the interceptors in the chain; in the reverse order of chain,\
@@ -43,7 +44,7 @@ export interface Interceptor {
    *  by looking at the `responseGeneratedByShortCircuitHandler` & `responseGeneratedByErrHandler` flags
    */
   onResponse?(response: InterceptorResponseWrapper,
-    interceptorStep: number): Observable<InterceptorResponseWrapper> | InterceptorResponseWrapper | void;
+    interceptorStep: number, requestNum?: number): Observable<InterceptorResponseWrapper> | InterceptorResponseWrapper | void;
 
   /**
    * Invoked once for each of the interceptors in the chain; in the reverse order of chain,\
@@ -54,7 +55,7 @@ export interface Interceptor {
    * An error will be thrown back to the subscriber
    */
   onShortCircuit?(response: InterceptorResponseWrapper,
-    interceptorStep: number): Observable<InterceptorResponseWrapper> | InterceptorResponseWrapper | void;
+    interceptorStep: number, requestNum?: number): Observable<InterceptorResponseWrapper> | InterceptorResponseWrapper | void;
 
   /**
    * Invoked when the flow encounters any error along the interceptor chain.
@@ -66,7 +67,7 @@ export interface Interceptor {
    * handler returns any response, the error will be thrown back to the subscriber
    */
   onErr?(response: InterceptorResponseWrapper,
-    interceptorStep: number): Observable<InterceptorResponseWrapper> | InterceptorResponseWrapper | void;
+    interceptorStep: number, requestNum?: number): Observable<InterceptorResponseWrapper> | InterceptorResponseWrapper | void;
 
   /**
    * Invoked when any one in the interceptor chain forces request completion/return response/error
@@ -74,7 +75,7 @@ export interface Interceptor {
    * such as stopping progress bar/logging
    */
   onForceCompleteOrForceReturn?(response: InterceptorResponseWrapper,
-    interceptorStep: number): void;
+    interceptorStep: number, requestNum?: number): void;
 
   /**
    * Invoked when the user unsubscribes while the request is still being handled
@@ -83,6 +84,8 @@ export interface Interceptor {
    * NOTE: This method would be invoked even if none of the other handler methods are called on the interceptor.
    * So, always do null checks in this handler
    */
-  onUnsubscribe?(interceptorStep: number, url: string | Request, options?: RequestOptionsArgs | InterceptorRequestOptionsArgs): void;
+  onUnsubscribe?(interceptorStep: number,
+    url: string | Request, options: RequestOptionsArgs | InterceptorRequestOptionsArgs,
+    requestNum?: number): void;
 
 }
