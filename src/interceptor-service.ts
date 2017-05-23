@@ -81,7 +81,8 @@ export class InterceptorService extends Http {
       .build();
 
     return Observable.create((observer: Subscriber<Response>) => {
-      const subscription = this.httpRequest(request).subscribe(
+      const requestNum = this.requestNum;
+      const subscription = this.httpRequest(request, requestNum).subscribe(
         (response: Response) => observer.next(response),
         (e: Error) => observer.error(e),
         () => observer.complete()
@@ -91,7 +92,7 @@ export class InterceptorService extends Http {
         for (let index = this.interceptors.length - 1; index >= 0; index--) {
           const interceptor = this.interceptors[index];
           if (interceptor.onUnsubscribe !== undefined) {
-            interceptor.onUnsubscribe(index, url, options, this.requestNum);
+            interceptor.onUnsubscribe(index, url, options, requestNum);
           }
         }
       });
@@ -187,8 +188,8 @@ export class InterceptorService extends Http {
   }
 
   /** Private functions **/
-  private httpRequest(request: InterceptorRequest): Observable<Response> {
-    return this.runBeforeInterceptors(request)
+  private httpRequest(request: InterceptorRequest, requestNum: number): Observable<Response> {
+    return this.runBeforeInterceptors(request, requestNum)
       .flatMap<InterceptorRequest, InterceptorResponseWrapper>((transformedRequest: InterceptorRequest, _: number) => {
         console.log(`Received request`, transformedRequest);
         const transformedRequestInternal = <InterceptorRequestInternal>transformedRequest;
@@ -230,7 +231,7 @@ export class InterceptorService extends Http {
         });
       })
       .flatMap((responseWrapper: InterceptorResponseWrapper, index: number) => {
-        return this.runAfterInterceptors(responseWrapper);
+        return this.runAfterInterceptors(responseWrapper, requestNum);
       })
       .flatMap((responseWrapper: InterceptorResponseWrapper, index: number) => {
         if (!responseWrapper.response) {
@@ -246,7 +247,7 @@ export class InterceptorService extends Http {
       });
   }
 
-  private runBeforeInterceptors(params: InterceptorRequest): Observable<InterceptorRequest> {
+  private runBeforeInterceptors(params: InterceptorRequest, requestNum: number): Observable<InterceptorRequest> {
     let request$: Observable<InterceptorRequest> = Observable.of(params);
 
     for (let index = 0; index < this.interceptors.length; index++) {
@@ -269,7 +270,7 @@ export class InterceptorService extends Http {
           if (interceptor.beforeRequest !== undefined) {
             try {
               console.log('Invoking beforeRequest on', interceptor);
-              const processedRequest = interceptor.beforeRequest(request, index, this.requestNum);
+              const processedRequest = interceptor.beforeRequest(request, index, requestNum);
               let processedRequest$: Observable<InterceptorRequest>;
 
               if (!processedRequest) { // if no request is returned; just proceed with the original request
@@ -300,7 +301,7 @@ export class InterceptorService extends Http {
     return request$;
   }
 
-  private runAfterInterceptors(responseWrapper: InterceptorResponseWrapper): Observable<InterceptorResponseWrapper> {
+  private runAfterInterceptors(responseWrapper: InterceptorResponseWrapper, requestNum: number): Observable<InterceptorResponseWrapper> {
     let responseWrapper$: Observable<InterceptorResponseWrapper> = Observable.of(responseWrapper);
 
     let startFrom: number;
@@ -327,7 +328,7 @@ export class InterceptorService extends Http {
             if (transformedResponseWrapper.forceRequestCompletion) {
               if (interceptor.onForceCompleteOrForceReturn !== undefined) {
                 console.log('Invoking onForceCompleteOrForceReturn on', interceptor);
-                interceptor.onForceCompleteOrForceReturn(transformedResponseWrapper, index, this.requestNum);
+                interceptor.onForceCompleteOrForceReturn(transformedResponseWrapper, index, requestNum);
               }
               if (index === 0) { // complete the observable, since this is the first interceptor (last in the response chain)
                 return Observable.empty();
@@ -337,7 +338,7 @@ export class InterceptorService extends Http {
             } else if (transformedResponseWrapper.forceReturnResponse) {
               if (interceptor.onForceCompleteOrForceReturn !== undefined) {
                 console.log('Invoking onForceCompleteOrForceReturn on', interceptor);
-                interceptor.onForceCompleteOrForceReturn(transformedResponseWrapper, index, this.requestNum);
+                interceptor.onForceCompleteOrForceReturn(transformedResponseWrapper, index, requestNum);
               }
               return Observable.of(transformedResponseWrapper);
             }
@@ -347,16 +348,16 @@ export class InterceptorService extends Http {
             if (transformedResponseWrapper.err) {
               if (interceptor.onErr !== undefined) {
                 console.log('Invoking onErr on', interceptor);
-                processedResponse = interceptor.onErr(transformedResponseWrapper, index, this.requestNum);
+                processedResponse = interceptor.onErr(transformedResponseWrapper, index, requestNum);
               }
             } else if (transformedResponseWrapper.isShortCircuited()) {
               if (interceptor.onShortCircuit !== undefined) {
                 console.log('Invoking onShortCircuit on', interceptor);
-                processedResponse = interceptor.onShortCircuit(transformedResponseWrapper, index, this.requestNum);
+                processedResponse = interceptor.onShortCircuit(transformedResponseWrapper, index, requestNum);
               }
             } else if (interceptor.onResponse !== undefined) {
               console.log('Invoking onResponse on', interceptor);
-              processedResponse = interceptor.onResponse(transformedResponseWrapper, index, this.requestNum);
+              processedResponse = interceptor.onResponse(transformedResponseWrapper, index, requestNum);
             }
 
             let procesedResponseWrapper$: Observable<InterceptorResponseWrapper>;
