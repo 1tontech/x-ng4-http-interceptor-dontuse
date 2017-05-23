@@ -84,6 +84,7 @@ export class InterceptorService extends Http {
         () => observer.complete()
       );
       observer.add(() => {
+        subscription.unsubscribe();
         this.interceptors.reverse().forEach((interceptor, index) => {
           if (interceptor.onUnsubscribe !== undefined) {
             interceptor.onUnsubscribe(index, url, options);

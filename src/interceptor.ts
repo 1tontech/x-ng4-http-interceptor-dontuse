@@ -79,7 +79,9 @@ export interface Interceptor {
   /**
    * Invoked when the user unsubscribes while the request is still being handled
    * Use this method to perform cleanup operations that should be performed when the request is cancelled by user
-   * such as stopping progress bar
+   * such as stopping progress bar.
+   * NOTE: This method would be invoked even if none of the other handler methods are called on the interceptor.
+   * So, always do null checks in this handler
    */
   onUnsubscribe?(interceptorStep: number, url: string | Request, options?: RequestOptionsArgs | InterceptorRequestOptionsArgs): void;
 
