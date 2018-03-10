@@ -15,8 +15,8 @@
     "build":
       "npm run clean && npm run transpile && npm run package && npm run minify && npm run generateDistPackageJson",
     "commit": "git-cz",
-    "semantic-release":
-      "semantic-release pre && npm run build && npm publish dist && semantic-release post",
+    "presemantic-release": "npm run build",
+    "semantic-release": "cd dist && semantic-release",
     "test": "echo ''"
   },
   "dependencies": {
