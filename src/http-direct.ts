@@ -1,6 +1,6 @@
 import { Request, RequestOptionsArgs, Response } from '@angular/http';
 
-import { Observable } from 'rxjs/Rx';
+import { Observable } from 'rxjs/Observable';
 
 export interface HttpDirect {
   request(url: string | Request, options?: RequestOptionsArgs): Observable<Response>;
