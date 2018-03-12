@@ -90,7 +90,7 @@ export class InterceptorService extends Http {
         (e: Error) => observer.error(e),
         () => observer.complete()
       );
-      observer.add(() => {
+      return function() {
         subscription.unsubscribe();
         for (let index = this.interceptors.length - 1; index >= 0; index--) {
           const interceptor = this.interceptors[index];
@@ -98,8 +98,7 @@ export class InterceptorService extends Http {
             interceptor.onUnsubscribe(index, url, options, reqNum);
           }
         }
-      });
-      return this;
+      };
     });
   }
 
@@ -216,10 +215,6 @@ export class InterceptorService extends Http {
     this._realResponseObservableTransformer = value;
   }
 
-  public newHttpNative(): HttpDirect {
-    return new this.HttpDirect();
-  }
-
   /** Private functions **/
   private httpRequest(
     request: InterceptorRequest,
@@ -268,7 +263,7 @@ export class InterceptorService extends Http {
             response$ = this._realResponseObservableTransformer.transform(
               response$,
               transformedRequest,
-              this.newHttpNative(),
+              new this.HttpDirect(),
               this
             );
           }

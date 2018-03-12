@@ -5,7 +5,6 @@ import { InterceptorResponseWrapperBuilder } from './interceptor-response-wrappe
 import { InterceptorUtils } from './interceptor-utils';
 
 export class InterceptorResponseWrapper {
-
   /**
    * url which will be cascaded to the final {@code Http} call
    */
@@ -78,6 +77,10 @@ export class InterceptorResponseWrapper {
     return this._url;
   }
 
+  get urlAsStr(): string {
+    return typeof this._url === 'string' ? this._url : this._url.url;
+  }
+
   get options(): any {
     return this._options;
   }
@@ -123,15 +126,20 @@ export class InterceptorResponseWrapper {
   }
 
   isShortCircuited(): boolean {
-    return this._shortCircuitTriggeredBy !== undefined && this._shortCircuitTriggeredBy !== null && !!this._shortCircuitTriggeredBy;
+    return (
+      this._shortCircuitTriggeredBy !== undefined &&
+      this._shortCircuitTriggeredBy !== null &&
+      !!this._shortCircuitTriggeredBy
+    );
   }
 
   circuitShortedByMe(currentStep: number): boolean {
-    return this.isShortCircuited() && this._shortCircuitTriggeredBy === currentStep;
+    return (
+      this.isShortCircuited() && this._shortCircuitTriggeredBy === currentStep
+    );
   }
 
   errThrownByMe(currentStep: number): boolean {
     return !!this._errEncounteredAt && this._errEncounteredAt === currentStep;
   }
-
 }
