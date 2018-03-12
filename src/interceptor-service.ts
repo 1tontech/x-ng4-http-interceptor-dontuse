@@ -216,6 +216,10 @@ export class InterceptorService extends Http {
     this._realResponseObservableTransformer = value;
   }
 
+  public newHttpNative(): HttpDirect {
+    return new this.HttpDirect();
+  }
+
   /** Private functions **/
   private httpRequest(
     request: InterceptorRequest,
@@ -264,7 +268,7 @@ export class InterceptorService extends Http {
             response$ = this._realResponseObservableTransformer.transform(
               response$,
               transformedRequest,
-              new this.HttpDirect(),
+              this.newHttpNative(),
               this
             );
           }
@@ -551,7 +555,7 @@ export class InterceptorService extends Http {
    * This interface allows consumers to make calls directly to HTTP calls
    * without being intercepted by {@code InterceptorService}; i.e `this`
    */
-  public get HttpDirect() {
+  private get HttpDirect() {
     const interceptorService = this;
 
     return class implements HttpDirect {
