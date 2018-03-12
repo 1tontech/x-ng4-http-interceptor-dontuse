@@ -90,15 +90,15 @@ export class InterceptorService extends Http {
         (e: Error) => observer.error(e),
         () => observer.complete()
       );
-      return function() {
-        subscription.unsubscribe();
+      observer.add(() => {
         for (let index = this.interceptors.length - 1; index >= 0; index--) {
           const interceptor = this.interceptors[index];
           if (interceptor.onUnsubscribe !== undefined) {
             interceptor.onUnsubscribe(index, url, options, reqNum);
           }
         }
-      };
+      });
+      return subscription;
     });
   }
 
