@@ -548,10 +548,10 @@ export class InterceptorService extends Http {
 
   /**
    * Returns an implementation that mirrors angular `Http` interface;
-   * This interface allows the response transformers to make calls directly to HTTP calls
-   * without being interceted by {@code InterceptorService}; i.e `this`
+   * This interface allows consumers to make calls directly to HTTP calls
+   * without being intercepted by {@code InterceptorService}; i.e `this`
    */
-  private get HttpDirect() {
+  public get HttpDirect() {
     const interceptorService = this;
 
     return class implements HttpDirect {
